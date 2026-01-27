@@ -2,7 +2,7 @@ import os
 import re
 import statistics
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+from jinja2 import Template
 from sim import read_simulations, DATA_DIR
 
 def get_available_strategies():
@@ -40,76 +40,62 @@ def main():
         print("No valid scores found in simulation files.")
         return
 
-    # Create Subplots: Top for Line Graphs, Bottom for Histogram
-    fig = make_subplots(
-        rows=2, cols=1,
-        subplot_titles=("Average and Median Scores vs Strategy X", "Score Distribution (Histogram)"),
-        vertical_spacing=0.15
+    # 1. Create Line Graph Figure
+    fig_lines = go.Figure()
+    fig_lines.add_trace(go.Scatter(x=valid_strategies, y=avg_scores, name="Average Score", mode='lines+markers'))
+    fig_lines.add_trace(go.Scatter(x=valid_strategies, y=median_scores, name="Median Score", mode='lines+markers'))
+    fig_lines.update_layout(
+        title="Average and Median Scores vs Strategy X",
+        xaxis_title="Strategy Threshold (X)",
+        yaxis_title="Score",
+        height=450
     )
 
-    # 1. Line Graphs (Average and Median)
-    fig.add_trace(
-        go.Scatter(x=valid_strategies, y=avg_scores, name="Average Score", mode='lines+markers'),
-        row=1, col=1
-    )
-    fig.add_trace(
-        go.Scatter(x=valid_strategies, y=median_scores, name="Median Score", mode='lines+markers'),
-        row=1, col=1
-    )
-
-    # 2. Histogram with Slider
-    # Add a histogram trace for every strategy; only the first one is visible initially
+    # 2. Create Histogram Figure with Slider
+    fig_hist = go.Figure()
     for i, x in enumerate(valid_strategies):
-        fig.add_trace(
+        fig_hist.add_trace(
             go.Histogram(
                 x=all_scores_by_x[x],
                 name=f"X={x}",
                 visible=(i == 0),
                 nbinsx=30,
                 marker_color='blue'
-            ),
-            row=2, col=1
+            )
         )
 
-    # Create Slider steps
     steps = []
     for i, x in enumerate(valid_strategies):
-        # Visibility list: [Line1, Line2, Hist_0, Hist_1, ..., Hist_i, ..., Hist_N]
-        # The first two traces (Line Graphs) are always visible.
-        visibility = [True, True] + [False] * len(valid_strategies)
-        visibility[i + 2] = True
-        
-        step = dict(
+        visibility = [False] * len(valid_strategies)
+        visibility[i] = True
+        steps.append(dict(
             method="update",
-            args=[{"visible": visibility},
-                  {"title": f"Flip7 Strategy Analysis (Current Histogram: X={x})"}],
+            args=[{"visible": visibility}, {"title": f"Score Distribution (Histogram): X={x}"}],
             label=str(x)
-        )
-        steps.append(step)
+        ))
 
-    sliders = [dict(
-        active=0,
-        currentvalue={"prefix": "Strategy X: "},
-        pad={"t": 50},
-        steps=steps
-    )]
-
-    fig.update_layout(
-        sliders=sliders,
-        height=900,
-        title_text="Flip7 Strategy Analysis",
-        showlegend=True,
-        xaxis_title="Strategy Threshold (X)",
-        yaxis_title="Score",
-        xaxis2_title="Score Value",
-        yaxis2_title="Frequency"
+    fig_hist.update_layout(
+        sliders=[dict(active=0, currentvalue={"prefix": "Strategy X: "}, pad={"t": 50}, steps=steps)],
+        height=500,
+        title=f"Score Distribution (Histogram): X={valid_strategies[0]}",
+        xaxis_title="Score Value",
+        yaxis_title="Frequency"
     )
 
-    # Ensure output directory exists
+    # 3. Render with Jinja2
+    with open("learnings.html.j2", "r", encoding="utf-8") as f:
+        template = Template(f.read())
+
+    html_content = template.render(
+        line_graph_div=fig_lines.to_html(full_html=False, include_plotlyjs=False),
+        hist_graph_div=fig_hist.to_html(full_html=False, include_plotlyjs=False)
+    )
+
     os.makedirs("out", exist_ok=True)
-    output_file = "out/index.html"
-    fig.write_html(output_file)
-    print(f"Analysis complete. Results saved to {output_file}")
+    with open("out/index.html", "w", encoding="utf-8") as f:
+        f.write(html_content)
+    
+    print(f"Analysis complete. Results saved to out/index.html")
 
 if __name__ == "__main__":
     main()
