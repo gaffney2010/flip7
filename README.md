@@ -47,3 +47,13 @@ The root of simulations will be a program, sim.py, that, when run, `python sim.p
 
 sim.py should also contain functions to read the set of simulations later when needed.  The idea is that I will run `python sim.py` with lots of values of X depending on how many free cycles my computer has, then I will use these simulations to do calculations later.
 
+### First simulation
+
+We're going to use the simulations from above to make the following graphs.
+
+- A line graph where the x-axis is the value X used in STRAT(X) and the y-axis is the average score from the simulations.
+- A line graph where the x-axis is the value X used in STRAT(X) and the y-axis is the median score from the simulations.
+- A histogram that shows the distribution of scores when STRAT(X) is applied.  X will be adjustable with a slider.
+
+We will use Plotly.js or Chart.js to make these tables and present them along with text explainers in a local html in ./out/.
+

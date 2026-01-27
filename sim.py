@@ -3,6 +3,21 @@ import sys
 import json
 import argparse
 import os
+from tqdm import tqdm
+
+# -----------------------------------------------------------------------------
+# Constants and Path Helpers
+# -----------------------------------------------------------------------------
+
+DATA_DIR = "data"
+
+
+def get_sim_path(x):
+    """
+    Returns the standard path for simulation results for strategy X.
+    """
+    return os.path.join(DATA_DIR, f"sim_results_{x}.jsonl")
+
 
 # -----------------------------------------------------------------------------
 # Card and Deck Definitions
@@ -159,7 +174,6 @@ def run_simulation(strategy_x):
         "is_bust": is_bust,
         "total_value": final_score,
         "is_flip_seven_bonus": is_flip_seven,
-        "strategy_x": strategy_x,
     }
 
 
@@ -168,19 +182,22 @@ def run_simulation(strategy_x):
 # -----------------------------------------------------------------------------
 
 
-def save_simulations(results, filename="sim_results.jsonl"):
+def save_simulations(results, x):
     """
     Appends simulation results to a JSONL file.
     """
+    os.makedirs(DATA_DIR, exist_ok=True)
+    filename = get_sim_path(x)
     with open(filename, "a") as f:
         for res in results:
             f.write(json.dumps(res) + "\n")
 
 
-def read_simulations(filename="sim_results.jsonl"):
+def read_simulations(x):
     """
     Yields simulation results from a JSONL file.
     """
+    filename = get_sim_path(x)
     if not os.path.exists(filename):
         return
 
@@ -196,21 +213,18 @@ def main():
         "X", type=int, help="Target score threshold to stand (Strategy X)"
     )
     parser.add_argument("n", type=int, help="Number of simulations to run")
-    parser.add_argument(
-        "--output", type=str, default="sim_results.jsonl", help="Output file"
-    )
 
     args = parser.parse_args()
 
     results = []
     # Optimization: Write in chunks if n is huge, but list is fine for reasonable n
-    for _ in range(args.n):
+    for _ in tqdm(range(args.n), desc=f"Strategy X={args.X}"):
         res = run_simulation(args.X)
         results.append(res)
 
-    save_simulations(results, args.output)
+    save_simulations(results, args.X)
     print(
-        f"Ran {args.n} simulations with Strategy X={args.X}. Results appended to {args.output}"
+        f"Ran {args.n} simulations with Strategy X={args.X}. Results appended to {get_sim_path(args.X)}"
     )
 
 
