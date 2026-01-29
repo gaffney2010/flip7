@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Flip7 Optimal Strategy Heatmap</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            line-height: 1.6;
+            color: #333;
+            padding: 0 20px;
+        }
+        h1 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            color: #2c3e50;
+        }
+        .description {
+            background: #eef7ff;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .heatmap-container {
+            margin: 30px 0;
+        }
+        table.heatmap {
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+        table.heatmap th, table.heatmap td {
+            width: 38px;
+            height: 38px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        table.heatmap th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        table.heatmap td {
+            border: 1px solid #ccc;
+        }
+        .axis-label {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 10px;
+        }
+        .y-axis-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 5px;
+        }
+        .legend-bar {
+            display: flex;
+            height: 20px;
+        }
+        .legend-segment {
+            width: 30px;
+            height: 20px;
+        }
+        .legend-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 330px;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flip7 Optimal Strategy Heatmap</h1>
+
+    <div class="description">
+        <p><strong>What this shows:</strong> Each cell displays the optimal strategy threshold <strong>X</strong> for Player 1.
+        The strategy "STRAT(X)" means: "Hit until your hand value is X or higher, then stand."</p>
+        <p><strong>How to read:</strong> Find your score on the bottom axis (Player Score) and your opponent's score on the left axis (Opponent Score). The number in that cell is your optimal X threshold.</p>
+        <p><strong>Color scale:</strong> Blue = conservative (low X, stand early), Red = aggressive (high X, keep hitting)</p>
+    </div>
+
+    <div class="legend">
+        <span>Conservative</span>
+        <div class="legend-bar">
+            {% for i in range(11) %}
+            <div class="legend-segment" style="background: {{ colors[i * 10] }};"></div>
+            {% endfor %}
+        </div>
+        <span>Aggressive</span>
+    </div>
+    <div style="text-align: center;">
+        <div class="legend-labels">
+            <span>X=0</span>
+            <span>X=50</span>
+            <span>X=100</span>
+        </div>
+    </div>
+
+    <div class="heatmap-container">
+        <table class="heatmap">
+            <tr>
+                <th></th>
+                <th class="axis-label" colspan="{{ score_steps|length }}">Player Score</th>
+            </tr>
+            <tr>
+                <th></th>
+                {% for score in score_steps %}
+                <th>{{ score }}</th>
+                {% endfor %}
+            </tr>
+            {% for opp_score in score_steps %}
+            <tr>
+                {% if loop.index0 == 0 %}
+                <th rowspan="{{ score_steps|length }}" class="y-axis-label axis-label">Opponent Score</th>
+                {% endif %}
+                <th>{{ opp_score }}</th>
+                {% for player_score in score_steps %}
+                {% set strategy = strategies[(player_score, opp_score)] %}
+                <td style="background: {{ colors[strategy] }}; color: {{ 'white' if strategy > 50 else 'black' }};">
+                    {{ strategy }}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="description">
+        <p><strong>Simulation parameters:</strong> {{ sims_per_strategy }} simulations per strategy tested, using backwards induction from end-game states.</p>
+    </div>
+</body>
+</html>

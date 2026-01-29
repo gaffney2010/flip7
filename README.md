@@ -47,7 +47,11 @@ The root of simulations will be a program, sim.py, that, when run, `python sim.p
 
 sim.py should also contain functions to read the set of simulations later when needed.  The idea is that I will run `python sim.py` with lots of values of X depending on how many free cycles my computer has, then I will use these simulations to do calculations later.
 
-### First simulation
+Next we will make a program called multisim.py.  We will determine the best strategy choosing among strategies STRAT(X) for X=0..100 (by intervals of 5) for two players to play when they have scores (a, b).  Optimal strategies will be determined by rounding (a, b) down to the nearest 10s.  multisim determines best strategy by trying all strategies with 10000 simulations (calling simulation logic built in sim.py).  Remember that the game is played until at least one play has crossed 200.  As we do simulations both players will have to shift their optimal strategy, so we will use backwards induction, starting by evaluating the (190, 190) scenario.  This program will be run all at once (with tqdm showing progress) and results will be saved so that we can perform the Second analysis outlined below. 
+
+Note:  For multisim, we have simplified the game to a two player game.
+
+### First analysis
 
 We're going to use the simulations from above to make the following graphs.
 
@@ -56,4 +60,10 @@ We're going to use the simulations from above to make the following graphs.
 - A histogram that shows the distribution of scores when STRAT(X) is applied.  X will be adjustable with a slider.
 
 We will use Plotly.js or Chart.js to make these tables and present them along with text explainers in a local html in ./out/.
+
+### Second analysis
+
+We're going to build a heat map with player 1 / player 2 score on the axes (called "Player Score" and "Opponent Score") and the values should be the X for the best STRAT(X) for player1.
+
+We will again use Chart.js to present these in a local html in ./out/.
 
