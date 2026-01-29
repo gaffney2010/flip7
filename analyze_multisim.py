@@ -9,6 +9,7 @@ import os
 from jinja2 import Template
 
 from multisim import load_results, SCORE_STEPS
+from strategy_learnings import STRATEGY_ANALYSIS
 
 
 def get_color(value):
@@ -53,7 +54,8 @@ def main():
         strategies=processed_strategies,
         colors=colors,
         score_steps=SCORE_STEPS,
-        sims_per_strategy=params["sims_per_strategy"]
+        sims_per_strategy=params["sims_per_strategy"],
+        strategy_analysis=STRATEGY_ANALYSIS
     )
 
     os.makedirs("out", exist_ok=True)
