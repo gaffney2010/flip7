@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cracking Flip 7: A Monte Carlo Analysis of Optimal Strategy</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --light-bg: #f8f9fa;
+            --border-color: #e9ecef;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.8;
+            color: #333;
+            background: #fff;
+        }
+
+        h1, h2, h3 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--primary-color);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.3em;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 2em;
+            font-style: italic;
+        }
+
+        .byline {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 3em;
+            padding-bottom: 1em;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-top: 2.5em;
+            padding-bottom: 0.3em;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        h3 {
+            font-size: 1.4em;
+            margin-top: 2em;
+            color: #34495e;
+        }
+
+        p {
+            margin: 1.2em 0;
+            text-align: justify;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .graph-container {
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 2em 0;
+            padding: 15px;
+        }
+
+        .graph-caption {
+            font-size: 0.9em;
+            color: #666;
+            text-align: center;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        .insight-box {
+            background: linear-gradient(135deg, #eef7ff 0%, #f5faff 100%);
+            border-left: 4px solid var(--accent-color);
+            padding: 20px 25px;
+            margin: 2em 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .insight-box h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+            font-size: 0.95em;
+        }
+
+        .rules-table th, .rules-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            text-align: center;
+        }
+
+        .rules-table th {
+            background: var(--light-bg);
+            font-weight: 600;
+        }
+
+        .rules-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .heatmap-container {
+            margin: 2em 0;
+            overflow-x: auto;
+            background: var(--light-bg);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        table.heatmap {
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+
+        table.heatmap th, table.heatmap td {
+            width: 32px;
+            height: 32px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        table.heatmap th {
+            background: #f5f5f5;
+        }
+
+        table.heatmap td {
+            border: 1px solid #ccc;
+        }
+
+        .axis-label {
+            font-weight: bold;
+            font-size: 12px;
+            padding: 8px;
+        }
+
+        .y-axis-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+            gap: 8px;
+            font-size: 13px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .legend-bar {
+            display: flex;
+            height: 18px;
+        }
+
+        .legend-segment {
+            width: 22px;
+            height: 18px;
+        }
+
+        .legend-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 242px;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .na-note {
+            text-align: center;
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        ul, ol {
+            margin: 1.2em 0;
+            padding-left: 1.5em;
+        }
+
+        li {
+            margin: 0.8em 0;
+        }
+
+        strong {
+            color: var(--primary-color);
+        }
+
+        .toc {
+            background: var(--light-bg);
+            border-radius: 8px;
+            padding: 20px 30px;
+            margin: 2em 0;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            font-size: 1.1em;
+        }
+
+        .toc ol {
+            margin-bottom: 0;
+        }
+
+        .toc li {
+            margin: 0.5em 0;
+        }
+
+        .conclusion {
+            background: linear-gradient(135deg, #f0f9f0 0%, #f8fff8 100%);
+            border-left: 4px solid #27ae60;
+            padding: 20px 25px;
+            margin: 2em 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .footer {
+            margin-top: 4em;
+            padding-top: 2em;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9em;
+            color: #666;
+            text-align: center;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: var(--light-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .rules-table {
+                font-size: 0.85em;
+            }
+
+            .rules-table th, .rules-table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <article>
+        <h1>Cracking Flip 7</h1>
+        <p class="subtitle">Using Monte Carlo Simulation to Find the Optimal Strategy</p>
+        <p class="byline">A data-driven exploration of risk and reward in a deceptively simple card game</p>
+
+        <div class="toc">
+            <h3>Contents</h3>
+            <ol>
+                <li><a href="#introduction">The Game of Flip 7</a></li>
+                <li><a href="#rules">Understanding the Rules</a></li>
+                <li><a href="#approach">Our Analytical Approach</a></li>
+                <li><a href="#single-hand">Single-Hand Analysis</a></li>
+                <li><a href="#game-theory">Game Theory: When Context Matters</a></li>
+                <li><a href="#conclusions">Conclusions</a></li>
+            </ol>
+        </div>
+
+        <h2 id="introduction">The Game of Flip 7</h2>
+
+        <p>
+            <a href="https://boardgamegeek.com/boardgame/420087/flip-7" target="_blank">Flip 7</a> is a push-your-luck
+            card game that bears a family resemblance to Blackjack. Each round, you're faced with a fundamental
+            decision: draw another card or stand with what you have? Draw too greedily and you'll bust;
+            play too conservatively and you'll fall behind. The player who reaches 200 points first wins.
+        </p>
+
+        <p>
+            What makes Flip 7 particularly interesting from a strategic perspective is its unique deck composition
+            and scoring mechanics. Unlike Blackjack's uniform distribution, Flip 7's deck is deliberately skewed:
+            higher-denomination cards appear more frequently, creating an asymmetric risk landscape that rewards
+            careful analysis.
+        </p>
+
+        <p>
+            This post documents my attempt to answer a simple question: <strong>what's the optimal strategy for
+            Flip 7?</strong> Using Monte Carlo simulation, I ran millions of hands to understand the probability
+            distributions at play, then used game theory to determine how strategy should shift based on the
+            current score.
+        </p>
+
+        <h2 id="rules">Understanding the Rules</h2>
+
+        <p>
+            Before diving into the analysis, let's establish the rules. Flip 7 uses a custom deck with
+            cards numbered 0 through 12, but here's the twist: the count of each card equals its
+            denomination (with the exception of 0, which appears once).
+        </p>
+
+        <table class="rules-table">
+            <thead>
+                <tr>
+                    <th>Card Value</th>
+                    <th>0</th>
+                    <th>1</th>
+                    <th>2</th>
+                    <th>3</th>
+                    <th>4</th>
+                    <th>5</th>
+                    <th>6</th>
+                    <th>7</th>
+                    <th>8</th>
+                    <th>9</th>
+                    <th>10</th>
+                    <th>11</th>
+                    <th>12</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Copies in Deck</th>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>2</td>
+                    <td>3</td>
+                    <td>4</td>
+                    <td>5</td>
+                    <td>6</td>
+                    <td>7</td>
+                    <td>8</td>
+                    <td>9</td>
+                    <td>10</td>
+                    <td>11</td>
+                    <td>12</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            This creates a deck heavily weighted toward high-value cards. There are twelve 12s but only
+            one 0 and one 1. This matters because of the bust condition.
+        </p>
+
+        <h3>The Bust Condition</h3>
+
+        <p>
+            You <strong>bust</strong> (and score zero) if you ever draw two cards of the same denomination.
+            Since high-value cards are more common, drawing multiple 10s, 11s, or 12s becomes increasingly
+            likely as your hand grows. This creates the central tension of the game: the same card
+            distribution that offers high scores also poses the greatest bust risk.
+        </p>
+
+        <h3>Special Cards</h3>
+
+        <p>
+            The deck also contains several special cards that modify scoring or provide safety nets:
+        </p>
+
+        <ul>
+            <li><strong>Plus cards (+2, +4, +6, +8, +10):</strong> Add their value to your final score after all other calculations.</li>
+            <li><strong>Double card (x2):</strong> Doubles your base score from number cards before plus cards are added.</li>
+            <li><strong>Second Chance cards (3 in deck):</strong> A get-out-of-jail card. If you would bust, discard this card along with the duplicate to stay in the hand. You can only hold one at a time.</li>
+        </ul>
+
+        <h3>The Flip 7 Bonus</h3>
+
+        <p>
+            If you successfully draw all seven cards without busting, you receive a <strong>15-point bonus</strong>.
+            Combined with the typical point values and modifiers, this can produce hands worth 60+ points,
+            representing the upper tail of the scoring distribution.
+        </p>
+
+        <h2 id="approach">Our Analytical Approach</h2>
+
+        <p>
+            To make the problem tractable, I adopted a simplified strategy framework. Rather than modeling
+            every possible decision tree, I focused on threshold-based strategies that can be expressed simply:
+        </p>
+
+        <div class="insight-box">
+            <h3>The Threshold Strategy</h3>
+            <p>
+                <strong>STRAT(X)</strong>: "Keep drawing cards until your hand's value reaches X or higher,
+                then stand."
+            </p>
+            <p>
+                The only exception: if you're holding a Second Chance card, always draw. There's no
+                rational reason to stand when you have insurance against busting.
+            </p>
+        </div>
+
+        <p>
+            This simplification transforms an intractable decision tree into a one-dimensional optimization
+            problem: find the X that maximizes expected value (or win probability, depending on game state).
+        </p>
+
+        <p>
+            The analysis proceeded in two phases:
+        </p>
+
+        <ol>
+            <li><strong>Single-hand optimization:</strong> What threshold X maximizes expected score for an isolated hand?</li>
+            <li><strong>Game-theoretic optimization:</strong> How should X change based on the current score differential?</li>
+        </ol>
+
+        <h2 id="single-hand">Single-Hand Analysis</h2>
+
+        <p>
+            Let's start with the simpler question: if you're playing a single hand with no broader game
+            context, what threshold maximizes your expected score?
+        </p>
+
+        <p>
+            I ran 100,000 simulations for each threshold value from 0 to 100 (in increments of 5) and
+            tracked both the average and median scores.
+        </p>
+
+        <div class="insight-box">
+            <h3>Finding 1: The Sweet Spot</h3>
+            <p>
+                The average score curve reaches its peak in the <strong>X = 25-30 range</strong>. This
+                represents the optimal threshold for maximizing expected value over many hands. Below
+                this threshold, you're leaving points on the table; above it, the increased bust
+                probability outweighs the potential gains.
+            </p>
+        </div>
+
+        <div class="graph-container">
+            {{ line_graph_div }}
+            <p class="graph-caption">Average and median scores across different strategy thresholds. The sweet spot emerges around X=25-30.</p>
+        </div>
+
+        <div class="insight-box">
+            <h3>Finding 2: The Phase Transition</h3>
+            <p>
+                The median score tells an even more interesting story. It follows the threshold almost
+                linearly (median ≈ X) until approximately <strong>X = 35</strong>, at which point it
+                collapses to zero. This marks a critical phase transition: below this threshold, you're
+                more likely to score than bust; above it, busting becomes the most probable outcome.
+            </p>
+        </div>
+
+        <p>
+            The score distributions reveal the mechanism behind this phase transition. Use the slider
+            below to see how the distribution changes as the threshold increases:
+        </p>
+
+        <div class="graph-container">
+            {{ hist_graph_div }}
+            <p class="graph-caption">Score distributions at different thresholds. Note the growing spike at zero (busts) and the persistent "long tail" around 60 points.</p>
+        </div>
+
+        <div class="insight-box">
+            <h3>Finding 3: The Flip 7 Long Tail</h3>
+            <p>
+                A distinct cluster of outcomes persists around <strong>60 points</strong> regardless of
+                threshold. This represents the Flip 7 bonus scenario, where a player successfully draws
+                all seven cards. At low thresholds, this occurs in roughly 1% of hands; as X increases
+                toward infinity, this becomes the <em>primary</em> path to a non-zero score, occurring
+                in approximately 10% of hands.
+            </p>
+            <p>
+                This "long tail" becomes strategically important when you're significantly behind.
+            </p>
+        </div>
+
+        <h2 id="game-theory">Game Theory: When Context Matters</h2>
+
+        <p>
+            Single-hand expected value optimization makes sense when you're playing many independent hands.
+            But Flip 7 is a race to 200 points. When you're behind, maximizing expected value might not be
+            the optimal approach. Sometimes you need to swing for the fences.
+        </p>
+
+        <p>
+            To understand this, I simulated full games using backward induction. Starting from end-game
+            positions (both players near 200), I determined which threshold gave Player 1 the highest
+            probability of winning. Then I worked backward through all possible score combinations.
+        </p>
+
+        <p>
+            The result is a strategy heatmap: for any combination of your score and your opponent's score,
+            it tells you the optimal threshold to use.
+        </p>
+
+        <div class="heatmap-container">
+            <div class="legend">
+                <span>Conservative</span>
+                <div class="legend-bar">
+                    {% for i in range(11) %}
+                    <div class="legend-segment" style="background: {{ colors[i * 10] }};"></div>
+                    {% endfor %}
+                </div>
+                <span>Aggressive</span>
+            </div>
+            <div style="text-align: center;">
+                <div class="legend-labels">
+                    <span>0</span>
+                    <span>50</span>
+                    <span>100</span>
+                </div>
+            </div>
+
+            <table class="heatmap">
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th class="axis-label" colspan="{{ score_steps|length }}">Your Score</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    {% for score in score_steps %}
+                    <th>{{ score }}</th>
+                    {% endfor %}
+                </tr>
+                {% for opp_score in score_steps %}
+                <tr>
+                    {% if loop.index0 == 0 %}
+                    <th rowspan="{{ score_steps|length }}" class="y-axis-label axis-label">Opponent Score</th>
+                    {% endif %}
+                    <th>{{ opp_score }}</th>
+                    {% for player_score in score_steps %}
+                    {% set strategy = strategies[(player_score, opp_score)] %}
+                    <td style="background: {{ colors[strategy] }}; color: {{ '#666' if strategy is none else ('white' if strategy > 50 else 'black') }};">
+                        {{ 'N/A' if strategy is none else strategy }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+            <p class="na-note">N/A = Position too far behind; all strategies perform similarly</p>
+        </div>
+
+        <div class="insight-box">
+            <h3>Finding 4: Relative Position Dominates</h3>
+            <p>
+                The heatmap reveals a striking pattern: optimal strategy depends almost entirely on the
+                <strong>score differential</strong>, not the absolute scores. Whether it's 20-40 or
+                120-140, the strategy is essentially the same. The diagonal bands of consistent color
+                make this visually apparent.
+            </p>
+            <p>
+                This means Flip 7 strategy reduces to a one-dimensional problem: how far ahead or
+                behind are you?
+            </p>
+        </div>
+
+        <div class="insight-box">
+            <h3>Finding 5: A Practical Strategy Guide</h3>
+            <p>Based on the simulations, here's a simplified strategy guide:</p>
+            <ul>
+                <li><strong>70+ points ahead:</strong> Play conservatively at <strong>threshold 10</strong>. Protect your lead; no need to risk a bust.</li>
+                <li><strong>20-70 points ahead:</strong> Use <strong>threshold 20</strong>. Be selective but avoid unnecessary risk.</li>
+                <li><strong>Even game:</strong> Use <strong>threshold 30</strong>, the value that maximizes single-hand expected value.</li>
+                <li><strong>20-40 points behind:</strong> Increase to <strong>threshold 40</strong>. You need above-average hands.</li>
+                <li><strong>50+ points behind:</strong> Go aggressive (threshold 80+). Your best shot is the Flip 7 bonus. This is the "long tail" strategy in action.</li>
+            </ul>
+        </div>
+
+        <h2 id="conclusions">Conclusions</h2>
+
+        <div class="conclusion">
+            <h3>Key Takeaways</h3>
+            <ol>
+                <li>For maximizing expected single-hand score, use a threshold around <strong>25-30</strong>.</li>
+                <li>The median score collapses at threshold 35, marking the transition from "likely scoring" to "likely busting."</li>
+                <li>In a competitive game, adjust your threshold based on the score differential, not the absolute scores.</li>
+                <li>When significantly behind, embrace the variance. The Flip 7 bonus becomes your path to victory.</li>
+                <li>When ahead, play conservatively. There's no prize for winning by more.</li>
+            </ol>
+        </div>
+
+        <p>
+            The analysis reveals Flip 7 to be a game with genuine strategic depth beneath its simple
+            push-your-luck surface. The skewed deck composition creates an interesting risk landscape,
+            and the game-theoretic considerations add another layer of complexity.
+        </p>
+
+        <p>
+            Of course, this analysis makes simplifying assumptions. Real games involve multiple opponents,
+            visible cards that shift probabilities, and special cards we've excluded from this analysis.
+            But as a foundation for understanding the game's strategic structure, simulation proves to be
+            a powerful tool.
+        </p>
+
+        <p>
+            If you're interested in the code behind this analysis, it's available on
+            <a href="https://github.com/gaffney2010/flip7" target="_blank">GitHub</a>. Feel free to
+            run your own simulations, extend the analysis, or challenge the findings.
+        </p>
+
+        <div class="footer">
+            <p>
+                Analysis performed using Monte Carlo simulation with 100,000+ simulations per strategy.
+                Game-theoretic analysis used backward induction with 10,000 simulations per game state.
+            </p>
+            <p>
+                <a href="https://github.com/gaffney2010/flip7" target="_blank">View source code on GitHub</a>
+            </p>
+        </div>
+    </article>
+</body>
+</html>
