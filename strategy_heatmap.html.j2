@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: sans-serif;
-            max-width: 1000px;
+            max-width: 900px;
             margin: 40px auto;
             line-height: 1.6;
             color: #333;
@@ -25,16 +25,17 @@
         }
         .heatmap-container {
             margin: 30px 0;
+            overflow-x: auto;
         }
         table.heatmap {
             border-collapse: collapse;
             margin: 0 auto;
         }
         table.heatmap th, table.heatmap td {
-            width: 38px;
-            height: 38px;
+            width: 32px;
+            height: 32px;
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
         }
         table.heatmap th {
@@ -46,8 +47,8 @@
         }
         .axis-label {
             font-weight: bold;
-            font-size: 14px;
-            padding: 10px;
+            font-size: 12px;
+            padding: 8px;
         }
         .y-axis-label {
             writing-mode: vertical-rl;
@@ -60,21 +61,28 @@
             align-items: center;
             margin: 20px 0;
             gap: 5px;
+            font-size: 13px;
         }
         .legend-bar {
             display: flex;
-            height: 20px;
+            height: 18px;
         }
         .legend-segment {
-            width: 30px;
-            height: 20px;
+            width: 25px;
+            height: 18px;
         }
         .legend-labels {
             display: flex;
             justify-content: space-between;
-            width: 330px;
-            font-size: 12px;
+            width: 275px;
+            font-size: 11px;
             margin-top: 2px;
+        }
+        .na-note {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -82,10 +90,10 @@
     <h1>Flip7 Optimal Strategy Heatmap</h1>
 
     <div class="description">
-        <p><strong>What this shows:</strong> Each cell displays the optimal strategy threshold <strong>X</strong> for Player 1.
-        The strategy "STRAT(X)" means: "Hit until your hand value is X or higher, then stand."</p>
-        <p><strong>How to read:</strong> Find your score on the bottom axis (Player Score) and your opponent's score on the left axis (Opponent Score). The number in that cell is your optimal X threshold.</p>
-        <p><strong>Color scale:</strong> Blue = conservative (low X, stand early), Red = aggressive (high X, keep hitting)</p>
+        <p><strong>What this shows:</strong> Each cell displays the optimal <strong>threshold</strong> for Player 1.
+        The threshold means: "Keep hitting until your hand value reaches this number, then stand."</p>
+        <p><strong>How to read:</strong> Find your score on the bottom (Player Score) and your opponent's score on the left (Opponent Score). The number in that cell is your optimal threshold.</p>
+        <p><strong>Color scale:</strong> Blue = conservative (stand early), Red = aggressive (keep hitting)</p>
     </div>
 
     <div class="legend">
@@ -99,9 +107,9 @@
     </div>
     <div style="text-align: center;">
         <div class="legend-labels">
-            <span>X=0</span>
-            <span>X=50</span>
-            <span>X=100</span>
+            <span>0</span>
+            <span>50</span>
+            <span>100</span>
         </div>
     </div>
 
@@ -109,9 +117,11 @@
         <table class="heatmap">
             <tr>
                 <th></th>
+                <th></th>
                 <th class="axis-label" colspan="{{ score_steps|length }}">Player Score</th>
             </tr>
             <tr>
+                <th></th>
                 <th></th>
                 {% for score in score_steps %}
                 <th>{{ score }}</th>
@@ -125,14 +135,16 @@
                 <th>{{ opp_score }}</th>
                 {% for player_score in score_steps %}
                 {% set strategy = strategies[(player_score, opp_score)] %}
-                <td style="background: {{ colors[strategy] }}; color: {{ 'white' if strategy > 50 else 'black' }};">
-                    {{ strategy }}
+                <td style="background: {{ colors[strategy] }}; color: {{ '#666' if strategy is none else ('white' if strategy > 50 else 'black') }};">
+                    {{ 'N/A' if strategy is none else strategy }}
                 </td>
                 {% endfor %}
             </tr>
             {% endfor %}
         </table>
     </div>
+
+    <p class="na-note">N/A = Position too far behind; all strategies perform similarly</p>
 
     <div class="description">
         <p><strong>Simulation parameters:</strong> {{ sims_per_strategy }} simulations per strategy tested, using backwards induction from end-game states.</p>
